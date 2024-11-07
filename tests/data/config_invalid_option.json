@@ -1,0 +1,10 @@
+{
+    "library": {
+        "location": "Library",
+        "condensed_location": "Condensed"
+    },
+    "download": {
+        "location": ".",
+        "preferred_format": "abc"        
+    }
+}

@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "music-manager"
+version = "0.0.0"
+description = ""
+authors = ["TheNope"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+requests = "^2.32.3"
+eyed3 = "^0.9.7"
+pytest = "^8.3.3"
+mutagen = "^1.47.0"
+
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.6.6"
+
+[tool.poetry.scripts]
+condense = "music_manager.condense:condense"
+download = "music_manager.download:download"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

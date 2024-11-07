@@ -1,0 +1,9 @@
+{
+    "library": {
+        "location": "Library"
+    },
+    "download": {
+        "location": ".",
+        "preferred_format": "lossless"        
+    }
+}
