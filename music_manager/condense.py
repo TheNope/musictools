@@ -1,9 +1,10 @@
+import ffmpeg
 import os
 import shutil
 from logging import Logger
 from music_manager import get_logger
 from music_manager.config import get_config
-from music_manager.value_objects import Playlist
+from music_manager.value_objects import Playlist, MusicFile
 from pathlib import Path
 
 
@@ -56,6 +57,7 @@ def copy_titles(
     logger: Logger,
 ) -> tuple[int, int, int]:
     library_config = get_config().library
+    condense_config = get_config().condense
     all_titles: list[Path] = []
     for playlist in playlists:
         all_titles += playlist.absolute_content(Path(library_config.location))
@@ -71,8 +73,11 @@ def copy_titles(
     for title in all_titles:
         count += 1
 
+        print(MusicFile.from_file(title).bitrate)
+
         condensed_path = Path(title.as_posix().replace(Path(library_config.location).as_posix(), Path(library_config.condensed_location).as_posix()))
-        if condensed_path.exists():
+        condensed_converted_path = condensed_path.with_suffix('.mp3')
+        if condensed_path.exists() or condensed_converted_path.exists():
             log_str = f'{str(count)}/{str(num_titles)}: {condensed_path.as_posix()} already exists!'
             count_existing += 1
         else:
@@ -81,8 +86,16 @@ def copy_titles(
                     parents=True,
                     exist_ok=True,
                 )
-                shutil.copy(str(title), str(condensed_path))
-                log_str = f'{str(count)}/{str(num_titles)}: {condensed_path.as_posix()} added.'
+                if condense_config.convert and MusicFile.from_file(title).bitrate > condense_config.conversion_bitrate:
+                    convert(
+                        source=title,
+                        target=condensed_converted_path,
+                        bitrate=str(condense_config.conversion_bitrate) + 'k'
+                    )
+                    log_str = f'{str(count)}/{str(num_titles)}: {condensed_path.as_posix()} converted and added.'
+                else:
+                    shutil.copy(str(title), str(condensed_path))
+                    log_str = f'{str(count)}/{str(num_titles)}: {condensed_path.as_posix()} added.'
                 count_successfull += 1
             except FileNotFoundError as e:
                 count_not_found += 1
@@ -93,6 +106,17 @@ def copy_titles(
     return (count_successfull, count_existing, count_not_found)
 
 
+def convert(
+    source: Path,
+    target: Path,
+    bitrate: str,
+):
+    try:
+        ffmpeg.input(str(source)).output(str(target), audio_bitrate=bitrate, **{'c:v': 'copy'}).run()
+    except Exception as e:
+        print(e)
+    
+
 def copy_playlists(playlists: list[Playlist]):
     library_config = get_config().library
     for playlist in playlists:
@@ -101,12 +125,16 @@ def copy_playlists(playlists: list[Playlist]):
 
 
 def condense():
+    condense_config = get_config().condense
     logger = get_logger()
     playlists = get_playlists()
     count_successfull, count_existing, count_not_found = copy_titles(
         playlists=playlists,
         logger=logger,
     )
+    if condense_config.convert:
+        for playlist in playlists:
+            playlist.convert('.mp3')
     count_removed = remove_titles(playlists)
     copy_playlists(playlists)
 

@@ -1,5 +1,7 @@
-from mutagen.easyid3 import EasyID3
-from typing import Optional
+from abc import ABC, abstractmethod
+from mutagen.flac import FLAC
+from mutagen.id3 import ID3
+from mutagen.mp3 import MP3
 from dataclasses import dataclass
 from pathlib import Path
 from music_manager import SUPPORTED_FORMATS
@@ -56,42 +58,77 @@ class Playlist:
                 print(f'Removed duplicate title {title} from playlist {self.path}')
         self.save()
 
+    def convert(
+            self,
+            format: str,
+        ):
+        for title in self.content:
+            original_title = title
+            title_path = Path(title)
+            title = title.replace(title_path.suffix, format)
+            title_index = self.content.index(original_title)
+            self.content[title_index] = title
 
-class MusicFile:
-    file_url: str
-    file_name: str
-    file: EasyID3
-    title: str
-    album: str
-    artist: str
-    year: str
-    track_number: int
 
-    def __init__(
-        self,
-        file_name: str,
-        title: Optional[str] = None,
-        album: Optional[str] = None,
-        artist: Optional[str] = None,
-        year: Optional[int] = None,
-        track_number: Optional[int] = None
-    ):
-        """Create a new Mp3File object representing an existing mp3 file on disk."""
-        self.file_name = file_name
-        self.file = EasyID3(file_name)
-        self.title = title
-        self.album = album
-        self.artist = artist
-        self.year = year
-        self.track_number = track_number
+@dataclass
+class MusicFile(ABC):
+    # title: str | None
+    # album: str | None
+    # artist: str | None
+    # year: str | None
+    # track_number: int | None
 
-    def write_tags(self):
-        """Write tags to the file on disk."""
-        self.file['title'] = self.title
-        self.file['album'] = self.album
-        if self.artist is not None:
-            self.file['artist'] = self.artist
-        self.file['date'] = self.year
-        self.file['tracknumber'] = self.track_number
+    @staticmethod
+    def from_file(file_path: Path) -> 'MusicFile':
+        if file_path.suffix == '.mp3':
+            return MP3File.from_file(file_path)
+        elif file_path.suffix == '.flac':
+            return FLACFile.from_file(file_path)
+        else:
+            raise ValueError('This file type is currently not suported.')
+        
+    @property
+    @abstractmethod
+    def bitrate(self) -> float:
+        pass
 
-        self.file.save()
+    # def write_tags(self):
+    #     if self.title: self.file['title'] = self.title
+    #     if self.album: self.file['album'] = self.album
+    #     if self.artist: self.file['artist'] = self.artist
+    #     if self.year: self.file['date'] = self.year
+    #     if self.track_number: self.file['tracknumber'] = self.track_number
+
+    #     self.file.save()
+
+@dataclass
+class MP3File(MusicFile):
+    mp3: MP3
+    id3: ID3
+
+    @staticmethod
+    def from_file(file_path: Path) -> 'MP3File':
+        mp3 = MP3(file_path)
+        return MP3File(
+            mp3=mp3,
+            id3 = mp3.tags or ID3()
+        )
+    
+    @property
+    def bitrate(self) -> float:
+        return self.mp3.info.bitrate / 1000
+
+
+@dataclass
+class FLACFile(MusicFile):
+    flac: FLAC
+
+    @staticmethod
+    def from_file(file_path: Path) -> 'FLACFile':
+        return FLACFile(
+            flac=FLAC(file_path)
+        )
+    
+    @property
+    def bitrate(self) -> float:
+        return 9999

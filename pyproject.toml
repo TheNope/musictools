@@ -8,9 +8,8 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.12"
 requests = "^2.32.3"
-eyed3 = "^0.9.7"
-pytest = "^8.3.3"
 mutagen = "^1.47.0"
+ffmpeg-python = "^0.2.0"
 
 
 [tool.poetry.group.dev.dependencies]

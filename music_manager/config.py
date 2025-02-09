@@ -68,6 +68,28 @@ class LibraryConfig(Config):
 
 
 @dataclass
+class CondenseConfig(Config):
+    convert: bool = False
+    conversion_bitrate: int = 320
+
+    @classmethod
+    def validate(
+        cls,
+        config_dict: dict[str, Any],
+    ):
+        cls._validate_field(
+            name='convert',
+            config_dict=config_dict,
+            content_type=type(cls.convert),
+        )
+        cls._validate_field(
+            name='conversion_bitrate',
+            config_dict=config_dict,
+            content_type=type(cls.conversion_bitrate),
+        )
+
+
+@dataclass
 class DownloadConfig(Config):
     location: str = ''
     preferred_format: str = 'lossless'
@@ -93,8 +115,8 @@ class DownloadConfig(Config):
 @dataclass
 class ProgramConfig(Config):
     library: LibraryConfig
+    condense: CondenseConfig
     download: DownloadConfig
-
 
     @classmethod
     def load(
@@ -105,5 +127,6 @@ class ProgramConfig(Config):
            config_dict = json.loads(config_file.read())
         return cls(
             library=LibraryConfig.load(config_dict.get('library')),
+            condense=CondenseConfig.load(config_dict.get('condense')),
             download=DownloadConfig.load(config_dict.get('download')),
         )

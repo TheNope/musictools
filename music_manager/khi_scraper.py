@@ -87,13 +87,13 @@ class KHIScraper:
                 file.write(title_file.content)
             self.logger.info(f'[{str('{:3}'.format(i))}/{str(num_titles)}] Downloaded "{file_name}"')
 
-            if file_type == '.mp3':
-                mp3_file = MusicFile(
-                    file_name=str(file_path),
-                    title=title,
-                    album=self.album_name,
-                    artist=None,
-                    year=self.year,
-                    track_number=str(i)
-                )
-                mp3_file.write_tags()            
+            # if file_type == '.mp3':
+            #     mp3_file = MusicFile(
+            #         file_name=str(file_path),
+            #         title=title,
+            #         album=self.album_name,
+            #         artist=None,
+            #         year=self.year,
+            #         track_number=str(i)
+            #     )
+            #     mp3_file.write_tags()            
