@@ -4,7 +4,7 @@ from mutagen.id3 import ID3
 from mutagen.mp3 import MP3
 from dataclasses import dataclass
 from pathlib import Path
-from music_manager import SUPPORTED_FORMATS
+from musictools import SUPPORTED_FORMATS
 
 
 @dataclass
@@ -58,7 +58,7 @@ class Playlist:
                 print(f'Removed duplicate title {title} from playlist {self.path}')
         self.save()
 
-    def convert(
+    def compress(
             self,
             format: str,
         ):
@@ -92,6 +92,11 @@ class MusicFile(ABC):
     def bitrate(self) -> float:
         pass
 
+    @property
+    @abstractmethod
+    def quality(self) -> float:
+        pass
+
     # def write_tags(self):
     #     if self.title: self.file['title'] = self.title
     #     if self.album: self.file['album'] = self.album
@@ -117,6 +122,10 @@ class MP3File(MusicFile):
     @property
     def bitrate(self) -> float:
         return self.mp3.info.bitrate / 1000
+    
+    @property
+    def quality(self) -> float:
+        return self.bitrate / 32
 
 
 @dataclass
@@ -132,3 +141,7 @@ class FLACFile(MusicFile):
     @property
     def bitrate(self) -> float:
         return 9999
+
+    @property
+    def quality(self) -> float:
+        return self.bitrate / 32

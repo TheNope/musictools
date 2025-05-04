@@ -1,5 +1,5 @@
-from music_manager.khi_scraper import KHIScraper
-from music_manager import get_logger
+from musictools.khi_scraper import KHIScraper
+from musictools import get_logger
 
 def download():
     url = input('Enter url to album: ')

@@ -2,9 +2,9 @@ import ffmpeg
 import os
 import shutil
 from logging import Logger
-from music_manager import get_logger
-from music_manager.config import get_config
-from music_manager.value_objects import Playlist, MusicFile
+from musictools import get_logger
+from musictools.config import get_config
+from musictools.value_objects import Playlist, MusicFile
 from pathlib import Path
 
 
@@ -52,6 +52,19 @@ def get_playlists() -> list[Playlist]:
     return ret_list
 
 
+def compress(
+    source: Path,
+    target: Path,
+    quality: int,
+    variable_bitrate: bool,
+):
+    if variable_bitrate:
+        ffmpeg.input(str(source)).output(str(target), **{'c:v': 'copy', 'qscale:a': str(10 - quality)}).run(quiet=True)
+    else:
+        bitrate = str(quality * 32) + 'k'
+        ffmpeg.input(str(source)).output(str(target), audio_bitrate=bitrate, **{'c:v': 'copy'}).run(quiet=True)
+
+
 def copy_titles(
     playlists: list[Playlist],
     logger: Logger,
@@ -73,8 +86,6 @@ def copy_titles(
     for title in all_titles:
         count += 1
 
-        print(MusicFile.from_file(title).bitrate)
-
         condensed_path = Path(title.as_posix().replace(Path(library_config.location).as_posix(), Path(library_config.condensed_location).as_posix()))
         condensed_converted_path = condensed_path.with_suffix('.mp3')
         if condensed_path.exists() or condensed_converted_path.exists():
@@ -86,13 +97,14 @@ def copy_titles(
                     parents=True,
                     exist_ok=True,
                 )
-                if condense_config.convert and MusicFile.from_file(title).bitrate > condense_config.conversion_bitrate:
-                    convert(
+                if condense_config.compress and MusicFile.from_file(title).quality > condense_config.compression_quality:
+                    compress(
                         source=title,
                         target=condensed_converted_path,
-                        bitrate=str(condense_config.conversion_bitrate) + 'k'
+                        quality=condense_config.compression_quality,
+                        variable_bitrate=condense_config.variable_bitrate,
                     )
-                    log_str = f'{str(count)}/{str(num_titles)}: {condensed_path.as_posix()} converted and added.'
+                    log_str = f'{str(count)}/{str(num_titles)}: {condensed_path.as_posix()} compressed and added.'
                 else:
                     shutil.copy(str(title), str(condensed_path))
                     log_str = f'{str(count)}/{str(num_titles)}: {condensed_path.as_posix()} added.'
@@ -100,21 +112,13 @@ def copy_titles(
             except FileNotFoundError as e:
                 count_not_found += 1
                 log_str = f'{str(count)}/{str(num_titles)}: {str(title)} does not exist!'
+            except Exception as e:
+                count_not_found += 1
+                log_str = f'{str(count)}/{str(num_titles)}: Error copying {str(title)}: {e}'
 
         logger.info(log_str)
 
     return (count_successfull, count_existing, count_not_found)
-
-
-def convert(
-    source: Path,
-    target: Path,
-    bitrate: str,
-):
-    try:
-        ffmpeg.input(str(source)).output(str(target), audio_bitrate=bitrate, **{'c:v': 'copy'}).run()
-    except Exception as e:
-        print(e)
     
 
 def copy_playlists(playlists: list[Playlist]):
@@ -132,9 +136,9 @@ def condense():
         playlists=playlists,
         logger=logger,
     )
-    if condense_config.convert:
+    if condense_config.compress:
         for playlist in playlists:
-            playlist.convert('.mp3')
+            playlist.compress('.mp3')
     count_removed = remove_titles(playlists)
     copy_playlists(playlists)
 

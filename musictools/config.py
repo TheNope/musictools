@@ -69,8 +69,9 @@ class LibraryConfig(Config):
 
 @dataclass
 class CondenseConfig(Config):
-    convert: bool = False
-    conversion_bitrate: int = 320
+    compress: bool = False
+    compression_quality: int = 10
+    variable_bitrate: bool = True
 
     @classmethod
     def validate(
@@ -78,14 +79,20 @@ class CondenseConfig(Config):
         config_dict: dict[str, Any],
     ):
         cls._validate_field(
-            name='convert',
+            name='compress',
             config_dict=config_dict,
-            content_type=type(cls.convert),
+            content_type=type(cls.compress),
         )
         cls._validate_field(
-            name='conversion_bitrate',
+            name='compression_quality',
             config_dict=config_dict,
-            content_type=type(cls.conversion_bitrate),
+            content_type=type(cls.compression_quality),
+            options=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+        )
+        cls._validate_field(
+            name='variable_bitrate',
+            config_dict=config_dict,
+            content_type=type(cls.variable_bitrate),
         )
 
 

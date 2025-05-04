@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "music-manager"
+name = "musictools"
 version = "0.0.0"
 description = ""
 authors = ["TheNope"]
@@ -16,8 +16,8 @@ ffmpeg-python = "^0.2.0"
 ruff = "^0.6.6"
 
 [tool.poetry.scripts]
-condense = "music_manager.condense:condense"
-download = "music_manager.download:download"
+condense = "musictools.condense:condense"
+download = "musictools.download:download"
 
 [build-system]
 requires = ["poetry-core"]

@@ -4,8 +4,8 @@ import re
 from pathlib import Path
 from logging import Logger
 
-from music_manager.config import get_config
-from music_manager.value_objects import MusicFile
+from musictools.config import get_config
+from musictools.value_objects import MusicFile
 
 class KHIScraper:
     header = {'user-agent': 'KHIScraper'}
