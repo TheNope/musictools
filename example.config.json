@@ -3,6 +3,11 @@
         "location": "",
         "condensed_location": ""
     },
+    "condense": {
+        "compress": true,
+        "compression_quality": 10,
+        "variable_bitrate": true
+    },
     "download": {
         "location": "",
         "preferred_format": "lossless"

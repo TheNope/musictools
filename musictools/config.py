@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from typing import Any
 
 
-def get_config(filename: str | None = 'config.json') -> 'ProgramConfig':
+def get_config(filename: str | None = "config.json") -> "ProgramConfig":
     return ProgramConfig.load(filename)
 
 
@@ -17,18 +17,22 @@ class Config:
         name: str,
         config_dict: dict[str, Any],
         content_type: type,
-        options: list[Any] | None = None
+        options: list[Any] | None = None,
     ):
         content = config_dict.get(name)
         if content is None:
             raise ConfigError(f'Config field "{name}" is missing')
         if not isinstance(content, content_type):
-            raise ConfigError(f'Config field "{name}" has type {type(content).__name__} but should be of type {content_type.__name__}')
+            raise ConfigError(
+                f'Config field "{name}" has type {type(content).__name__} but should be of type {content_type.__name__}'
+            )
         if options:
             if content not in options:
-                raise ConfigError(f'Value of config field "{name}" is "{content}" but should be one of {options}')
+                raise ConfigError(
+                    f'Value of config field "{name}" is "{content}" but should be one of {options}'
+                )
         return
-    
+
     @classmethod
     def validate(
         cls,
@@ -40,15 +44,15 @@ class Config:
     def load(
         cls,
         config_dict: dict[str, Any],
-    ) -> 'Config':
+    ) -> "Config":
         cls.validate(config_dict)
         return cls(**config_dict)
 
 
 @dataclass
 class LibraryConfig(Config):
-    location: str = ''
-    condensed_location: str = ''
+    location: str = ""
+    condensed_location: str = ""
 
     @classmethod
     def validate(
@@ -56,12 +60,12 @@ class LibraryConfig(Config):
         config_dict: dict[str, Any],
     ):
         cls._validate_field(
-            name='location',
+            name="location",
             config_dict=config_dict,
             content_type=type(cls.location),
         )
         cls._validate_field(
-            name='condensed_location',
+            name="condensed_location",
             config_dict=config_dict,
             content_type=type(cls.condensed_location),
         )
@@ -79,18 +83,18 @@ class CondenseConfig(Config):
         config_dict: dict[str, Any],
     ):
         cls._validate_field(
-            name='compress',
+            name="compress",
             config_dict=config_dict,
             content_type=type(cls.compress),
         )
         cls._validate_field(
-            name='compression_quality',
+            name="compression_quality",
             config_dict=config_dict,
             content_type=type(cls.compression_quality),
-            options=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+            options=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
         )
         cls._validate_field(
-            name='variable_bitrate',
+            name="variable_bitrate",
             config_dict=config_dict,
             content_type=type(cls.variable_bitrate),
         )
@@ -98,8 +102,8 @@ class CondenseConfig(Config):
 
 @dataclass
 class DownloadConfig(Config):
-    location: str = ''
-    preferred_format: str = 'lossless'
+    location: str = ""
+    preferred_format: str = "lossless"
 
     @classmethod
     def validate(
@@ -107,13 +111,13 @@ class DownloadConfig(Config):
         config_dict: dict[str, Any],
     ):
         cls._validate_field(
-            name='preferred_format',
+            name="preferred_format",
             config_dict=config_dict,
             content_type=type(cls.preferred_format),
-            options=['lossless', 'lossy'],
+            options=["lossless", "lossy"],
         )
         cls._validate_field(
-            name='location',
+            name="location",
             config_dict=config_dict,
             content_type=type(cls.location),
         )
@@ -129,11 +133,11 @@ class ProgramConfig(Config):
     def load(
         cls,
         filename: str,
-    ) -> 'Config':
-        with open(filename, 'rt') as config_file:
-           config_dict = json.loads(config_file.read())
+    ) -> "Config":
+        with open(filename, "rt") as config_file:
+            config_dict = json.loads(config_file.read())
         return cls(
-            library=LibraryConfig.load(config_dict.get('library')),
-            condense=CondenseConfig.load(config_dict.get('condense')),
-            download=DownloadConfig.load(config_dict.get('download')),
+            library=LibraryConfig.load(config_dict.get("library")),
+            condense=CondenseConfig.load(config_dict.get("condense")),
+            download=DownloadConfig.load(config_dict.get("download")),
         )
