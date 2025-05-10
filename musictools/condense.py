@@ -3,11 +3,12 @@ import os
 import shutil
 from logging import Logger
 from musictools import get_logger
-from musictools.common.utils.file_utils import list_titles
+from musictools.common.utils.file_utils import get_playlists, list_titles
 from musictools.config import get_config
 from musictools.common.value_objects.music_file import MusicFile
 from musictools.common.value_objects.playlist import Playlist
 from pathlib import Path
+
 
 def remove_titles(playlists: list[Playlist]) -> int:
     library_config = get_config().library
@@ -16,29 +17,15 @@ def remove_titles(playlists: list[Playlist]) -> int:
     current_titles = list_titles(Path(library_config.condensed_location))
     all_titles: list[Path] = []
     for playlist in playlists:
-        all_titles += playlist.absolute_content(library_config.condensed_location)
+        all_titles += playlist.content_paths()
 
     for title in current_titles:
-        if title not in all_titles and not str(title).endswith(".m3u"):
-            os.remove(title)
+        if title not in all_titles:
+            Path.unlink(title)
             count_removed += 1
             print(str(title) + " removed.")
 
     return count_removed
-
-
-def get_playlists() -> list[Playlist]:
-    library_config = get_config().library
-    item_list = os.listdir(library_config.location)
-    ret_list: list[Playlist] = []
-    for item in item_list:
-        if item.endswith(".m3u"):
-            ret_list.append(
-                Playlist.from_file(Path(f"{library_config.location}/{item}"))
-            )
-    for playlist in ret_list:
-        playlist.remove_duplicates()
-    return ret_list
 
 
 def compress(
@@ -66,7 +53,7 @@ def copy_titles(
     condense_config = get_config().condense
     all_titles: list[Path] = []
     for playlist in playlists:
-        all_titles += playlist.absolute_content(Path(library_config.location))
+        all_titles += playlist.content_paths()
     count = 0
     count_successfull = 0
     count_existing = 0
@@ -141,15 +128,20 @@ def copy_playlists(playlists: list[Playlist]):
 
 def condense():
     condense_config = get_config().condense
+    library_config = get_config().library
+
     logger = get_logger()
-    playlists = get_playlists()
+    playlists = get_playlists(Path(library_config.location))
     count_successfull, count_existing, count_not_found = copy_titles(
         playlists=playlists,
         logger=logger,
     )
-    if condense_config.compress:
-        for playlist in playlists:
-            playlist.compress(".mp3")
+    for playlist in playlists:
+        playlist.condense(
+            location=Path(library_config.location),
+            condensed_location=Path(library_config.condensed_location),
+            format=".mp3" if condense_config.compress else None,
+        )
     count_removed = remove_titles(playlists)
     copy_playlists(playlists)
 

@@ -18,6 +18,7 @@ ruff = "^0.6.6"
 [tool.poetry.scripts]
 condense = "musictools.condense:condense"
 download = "musictools.download:download"
+export = "musictools.export:export"
 
 [build-system]
 requires = ["poetry-core"]

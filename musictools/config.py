@@ -124,10 +124,27 @@ class DownloadConfig(Config):
 
 
 @dataclass
+class ExportConfig(Config):
+    location: str = ""
+
+    @classmethod
+    def validate(
+        cls,
+        config_dict: dict[str, Any],
+    ):
+        cls._validate_field(
+            name="location",
+            config_dict=config_dict,
+            content_type=type(cls.location),
+        )
+
+
+@dataclass
 class ProgramConfig(Config):
     library: LibraryConfig
     condense: CondenseConfig
     download: DownloadConfig
+    export: ExportConfig
 
     @classmethod
     def load(
@@ -140,4 +157,5 @@ class ProgramConfig(Config):
             library=LibraryConfig.load(config_dict.get("library")),
             condense=CondenseConfig.load(config_dict.get("condense")),
             download=DownloadConfig.load(config_dict.get("download")),
+            export=ExportConfig.load(config_dict.get("export")),
         )

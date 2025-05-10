@@ -1,20 +1,26 @@
 from dataclasses import dataclass
 from pathlib import Path
 from musictools import SUPPORTED_FORMATS
+from musictools.common.value_objects.music_file import MusicFile
 
 
 @dataclass
 class Playlist:
     path: Path
-    content: list[str]
+    title_prefix_path: Path
+    name: str
+    content: list[MusicFile]
 
     @classmethod
     def from_file(
         cls,
-        path: str,
+        path: Path,
+        title_prefix_path: Path,
     ) -> "Playlist":
         playlist = cls(
             path=path,
+            title_prefix_path=title_prefix_path,
+            name=path.name.replace(path.suffix, ""),
             content=[],
         )
         with open(path, "rt") as playlist_file:
@@ -23,7 +29,9 @@ class Playlist:
             line = line.rstrip()
             for format in SUPPORTED_FORMATS:
                 if line.endswith(format):
-                    playlist.content.append(line)
+                    playlist.content.append(
+                        MusicFile.from_file(title_prefix_path / Path(line))
+                    )
                     continue
         return playlist
 
@@ -35,32 +43,31 @@ class Playlist:
             path = self.path
         with open(path, "wt") as playlist_file:
             for title in self.content:
-                playlist_file.write(title + "\n")
+                playlist_file.write(
+                    str(title.path.relative_to(self.title_prefix_path)) + "\n"
+                )
 
-    def absolute_content(
-        self,
-        prefix_path: Path,
-    ) -> list[Path]:
+    def content_paths(self) -> list[Path]:
         absolute_content: list[Path] = []
         for title in self.content:
-            absolute_path = prefix_path / Path(title)
-            absolute_content.append(absolute_path)
+            absolute_content.append(title.path)
         return absolute_content
 
-    def remove_duplicates(self):
-        for title in self.content:
-            while self.content.count(title) > 1:
-                self.content.remove(title)
-                print(f"Removed duplicate title {title} from playlist {self.path}")
-        self.save()
-
-    def compress(
+    def condense(
         self,
-        format: str,
+        location: Path,
+        condensed_location: Path,
+        format: str | None = None,
     ):
+        self.title_prefix_path = condensed_location
         for title in self.content:
-            original_title = title
-            title_path = Path(title)
-            title = title.replace(title_path.suffix, format)
-            title_index = self.content.index(original_title)
-            self.content[title_index] = title
+            title.path = Path(
+                title.path.as_posix().replace(
+                    location.as_posix(),
+                    condensed_location.as_posix(),
+                )
+            )
+            if format:
+                title.path = Path(
+                    title.path.as_posix().replace(title.path.suffix, format)
+                )

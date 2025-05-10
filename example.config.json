@@ -11,5 +11,8 @@
     "download": {
         "location": "",
         "preferred_format": "lossless"
+    },
+    "export": {
+        "location": ""
     }
 }
