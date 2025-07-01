@@ -8,6 +8,7 @@ from musictools.config import get_config
 
 
 class KHIScraper:
+    headers: dict[str, str]
     title_urls = [tuple[str, str]]
     album_name: str
     album_url: str
@@ -19,9 +20,12 @@ class KHIScraper:
         logger: Logger,
     ):
         self.logger = logger
+        self.headers = {
+            "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0"
+        }
         page = self._get_html(album_url)
         self.title_urls = re.findall(
-            pattern=r'<td class="clickable-row"><a href="(.*)">(.*)</a></td>',
+            pattern=r'<td class="clickable-row"><a href="(.*)">.*</a></td>',
             string=page,
         )
         self.album_name, self.year = re.findall(
@@ -34,7 +38,7 @@ class KHIScraper:
         self,
         url: str,
     ) -> str:
-        page = requests.get(url=url, headers=self.header)
+        page = requests.get(url=url, headers=self.headers)
         page.encoding = page.apparent_encoding
         return html.unescape(page.text)
 
@@ -79,7 +83,7 @@ class KHIScraper:
                     f'[{str('{:3}'.format(i))}/{str(num_titles)}] Found existing file "{file_name}" skipping...'
                 )
                 continue
-            title_file = requests.get(url=file_url, headers=self.header)
+            title_file = requests.get(url=file_url, headers=self.headers)
             with open(file_path, "wb") as file:
                 file.write(title_file.content)
             self.logger.info(

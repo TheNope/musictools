@@ -1,9 +1,10 @@
+import sys
 from musictools.khi_scraper import KHIScraper
 from musictools import get_logger
 
 
 def download():
-    url = input("Enter url to album: ")
+    url = sys.argv[1]
     logger = get_logger()
 
     if "khinsider" in url:
