@@ -12,6 +12,7 @@ def generate_library_dict(library_location: Path) -> dict[str, dict[str, str]]:
 
     for title in titles:
         music_file = MusicFile.from_file(title)
+        music_file.load()
         title_dict = {
             "artist": music_file.artist,
             "album": music_file.album,
@@ -34,6 +35,7 @@ def generate_playlists_dict(library_location: Path) -> dict[str, dict[str, str]]
         i = 0
 
         for title in playlist.content:
+            title.load()
             title_dict = {
                 "artist": title.artist,
                 "album": title.album,

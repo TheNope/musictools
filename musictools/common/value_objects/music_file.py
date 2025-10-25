@@ -18,6 +18,10 @@ class MusicFile(ABC):
             return FLACFile.from_file(file_path)
         else:
             raise ValueError("This file type is currently not suported.")
+        
+    @abstractmethod
+    def load(self):
+        raise NotImplementedError
 
     @property
     @abstractmethod
@@ -57,13 +61,16 @@ class MusicFile(ABC):
 
 @dataclass
 class MP3File(MusicFile):
-    mp3: MP3
-    id3: ID3
+    mp3: MP3 | None
+    id3: ID3 | None
 
     @staticmethod
     def from_file(file_path: Path) -> "MP3File":
-        mp3 = MP3(file_path)
-        return MP3File(path=file_path, mp3=mp3, id3=mp3.tags or ID3())
+        return MP3File(path=file_path, mp3=None, id3=None)
+    
+    def load(self):
+        self.mp3 = MP3(self.path)
+        self.id3 = self.mp3.tags or ID3()
 
     def _texts(self, frame_id: str) -> list[str]:
         texts: list[str] = []
@@ -102,11 +109,14 @@ class MP3File(MusicFile):
 
 @dataclass
 class FLACFile(MusicFile):
-    flac: FLAC
+    flac: FLAC | None
 
     @staticmethod
     def from_file(file_path: Path) -> "FLACFile":
-        return FLACFile(path=file_path, flac=FLAC(file_path))
+        return FLACFile(path=file_path, flac=None)
+    
+    def load(self):
+        self.flac = FLAC(self.path)
 
     @property
     def artist(self) -> list[str]:
